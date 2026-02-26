@@ -1,65 +1,199 @@
-# 🖼️ Traitement d'Images avec SciPy ndimage
+# Pipeline ETL Joconde - Modern Data Stack
 
-> Atelier pratique : 5 transformations d'images avec scipy.ndimage
+Pipeline ETL automatisé pour le catalogue national des œuvres d'art des musées français.
 
-[![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python)](https://www.python.org/)
-[![SciPy](https://img.shields.io/badge/SciPy-1.7+-8CAAE6?logo=scipy)](https://scipy.org/)
+## Description
 
-## 📋 Description
+Pipeline ETL qui collecte, transforme et charge les données du catalogue Joconde - la base de données des collections des musées de France.
 
-Ce projet explore cinq transformations fondamentales du traitement d'images avec `scipy.ndimage` :
+**Volume traité :** 721 629 œuvres d'art  
+**Qualité finale :** 90.6% de conservation après filtrage (653 686 enregistrements)  
+**Stack :** Dagster + dbt + PostgreSQL + Polars + Docker
 
-1. **Flou Gaussien** - Lissage par convolution gaussienne
-2. **Détection de Contours (Sobel)** - Extraction de gradients
-3. **Rotation** - Transformation affine
-4. **Zoom** - Rééchantillonnage spatial
-5. **Filtre de Moyenne** - Lissage uniforme
+## Architecture
 
-## 🚀 Installation
+### Stack Technique
+
+- **Orchestration** : Dagster
+- **Transformation** : dbt
+- **Stockage** : PostgreSQL (staging + production)
+- **Processing** : Polars
+- **Containerisation** : Docker
+
+### Flux de Données
+
+```
+API Joconde (JSON)
+        ↓
+    EXTRACT (Python)
+        ↓
+STAGING (PostgreSQL)
+721 629 enregistrements bruts
+        ↓
+  TRANSFORM (dbt)
+  Nettoyage + Tests qualité
+        ↓
+PRODUCTION (PostgreSQL)
+653 686 enregistrements validés
+```
+
+## Caractéristiques
+
+**Performance**
+- Optimisation -90% temps de traitement (Polars)
+- Compression 10x : 450MB → 45MB
+- Pipeline optimisé pour grandes volumétries
+
+**Qualité des Données**
+- Taux de qualité 90.6% après filtrage
+- Tests dbt automatiques
+- Validation schéma + business rules
+- Déduplication rigoureuse
+
+**Observabilité**
+- Dagster UI : monitoring temps réel
+- Data Lineage : traçabilité complète
+- Documentation auto-générée (dbt)
+- Logs détaillés
+
+**Architecture**
+- Staging → Production : environnements séparés
+- Transformations dbt : SQL versionné et testé
+- Containerisation : reproductibilité garantie
+
+## Métriques
+
+| Métrique | Valeur |
+|----------|--------|
+| Œuvres totales | 721 629 |
+| Production | 653 686 |
+| Taux qualité | 90.6% |
+| Optimisation temps | -90% |
+| Compression | 10x |
+
+## Installation
+
+### Prérequis
+
+- Python 3.10+
+- PostgreSQL 14+
+- Docker
+
+### Setup
+
 ```bash
+git clone https://github.com/bipanda93/ETL-pipeline-Joconde.git
+cd ETL-pipeline-Joconde
+
+python -m venv venv
+source venv/bin/activate
+
 pip install -r requirements.txt
+
+createdb joconde_staging
+createdb joconde_production
+
+cp .env.example .env
 ```
 
-## 💻 Utilisation
+## Utilisation
+
+### Lancer Dagster
+
 ```bash
-python atelier_scipy_ndimage.py
+dagster dev
 ```
 
-## 📊 Transformations Implémentées
+Accéder à l'interface : http://localhost:3000
 
-### 1. Flou Gaussien
-**Principe :** Convolution G(x,y) = (1/2πσ²)·exp(−(x²+y²)/2σ²)
+### Exécuter dbt
 
-### 2. Sobel (Détection de Contours)
-**Principe :** Magnitude du gradient M = √(Gx² + Gy²)
+```bash
+cd dbt_project
 
-### 3. Rotation
-**Principe :** Transformation affine + interpolation spline
-
-### 4. Zoom
-**Principe :** Rééchantillonnage avec interpolation
-
-### 5. Filtre de Moyenne
-**Principe :** Moyenne uniforme I'(x,y) = (1/n²)·ΣΣI(x+i,y+j)
-
-## 📁 Structure
-```
-scipy-image-processing/
-├── atelier_scipy_ndimage.py    # Script principal
-├── atelier_image.jpg            # Image source
-├── rapport_final_scipy.pdf      # Rapport détaillé
-├── requirements.txt             # Dépendances
-├── README.md                    # Ce fichier
-└── LICENSE                      # Licence MIT
+dbt run
+dbt test
+dbt docs generate
+dbt docs serve
 ```
 
-## 👨‍💻 Auteur
+## Structure
+
+```
+ETL-pipeline-Joconde/
+├── dagster_project/
+│   ├── assets/
+│   ├── resources/
+│   └── jobs/
+├── dbt_project/
+│   ├── models/
+│   │   ├── staging/
+│   │   └── production/
+│   └── tests/
+├── sql/
+├── requirements.txt
+└── README.md
+```
+
+## Pipeline Détaillé
+
+### Extract
+
+Extraction depuis API Joconde via Dagster asset.
+
+### Load Staging
+
+Chargement données brutes en PostgreSQL staging.
+
+### Transform
+
+Transformations dbt :
+- Nettoyage des données
+- Déduplication
+- Validation qualité
+- Tests automatiques
+
+### Production
+
+Chargement données validées en PostgreSQL production.
+
+## Tests
+
+```bash
+dbt test
+dbt test --select staging
+dbt test --select production
+```
+
+## Optimisations
+
+**Performance**
+- Polars pour traitement parallélisé
+- Indexation PostgreSQL
+- Compression des données
+
+**Qualité**
+- Déduplication multi-critères
+- Validation en couches (staging + production)
+- Tests dbt automatiques
+
+## Auteur
 
 **Franck Ulrich BIPANDA**
-- Master 2 Data Engineer - Digital School of Paris
+
+Master 2 Data Engineer - Digital School of Paris
+
 - [LinkedIn](https://www.linkedin.com/in/franck-bipanda-13392372)
 - [GitHub](https://github.com/bipanda93)
+- [Portfolio](https://www.datascienceportfol.io/bipandaf)
 
-## 📜 Licence
+## Licence
 
-MIT License - Voir [LICENSE](LICENSE)
+MIT License
+
+## Ressources
+
+- [API Joconde](https://data.culture.gouv.fr/)
+- [Dagster](https://docs.dagster.io/)
+- [dbt](https://docs.getdbt.com/)
+- [Polars](https://pola-rs.github.io/polars/)
